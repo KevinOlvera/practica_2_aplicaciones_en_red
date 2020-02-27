@@ -8,7 +8,7 @@
 //char global_variable_1[4];
 //char global_variable_2[4];
 
-#define lim_cp 1    //# Consumos Producciones
+#define lim_cp 10000    //# Consumos Producciones
 #define lim_sp 16   //# Semaforos
 #define lim_sc 8    //# Secciones
 #define lim_th 10   //# Hilos
