@@ -5,26 +5,34 @@
 #include <semaphore.h>
 #include <string.h>
 
-char global_variable_1[2];
-char global_variable_2[2];
-sem_t sem_1, sem_2, sem_3, sem_4;
-int lim_cp = 2; 
+//char global_variable_1[4];
+//char global_variable_2[4];
+
+char global_variable_1;
+char global_variable_2;
+
+sem_t sem[4];
+
+int lim_cp = 1;
+
+int error(char *err);
+
+
 
 void *producer(void *args) {
-    char c[1] = "";
-    strcpy(c, (char *)args);
+    char c = *(char *)args;
     int i = 0;
     while (i < lim_cp)
     {
-        if (sem_trywait(&sem_1) == 0) {
-            sprintf(global_variable_1, "%s", c);
-            printf("Producer %s - Ciclo %d - Seccion S1\n", global_variable_1, i);
-            sem_post(&sem_2);
+        if (sem_trywait(&sem[0]) == 0) {
+            global_variable_1 = c;
+            printf("Producer %c - Ciclo %d - Seccion S1\n", global_variable_1, i);
+            sem_post(&sem[1]);
             i++;
-        } else if (sem_trywait(&sem_3) == 0) {
-            sprintf(global_variable_2, "%s", c);
-            printf("Producer %s - Ciclo %d - Seccion S2\n", global_variable_2, i);
-            sem_post(&sem_4);
+        } else if (sem_trywait(&sem[2]) == 0) {
+            global_variable_2 = c;
+            printf("Producer %c - Ciclo %d - Seccion S2\n", global_variable_2, i);
+            sem_post(&sem[3]);
             i++;
         }
     }
@@ -32,31 +40,32 @@ void *producer(void *args) {
 }
 
 void *consumer(void *args) {
-    char c[1] = "";
-    strcpy(c, (char *)args);
+    char c = *(char *)args;
     int i = 0;
     while (i < lim_cp)
     {
-        if (sem_trywait(&sem_2) == 0) {
-            printf("Consumer %s - Ciclo %d - Seccion S1 - Valor %s\n", c, i, global_variable_1);
-            sem_post(&sem_1);
+        if (sem_trywait(&sem[1]) == 0) {
+            printf("Consumer %c - Ciclo %d - Seccion S1 - Valor %c\n", c, i, global_variable_1);
+            sem_post(&sem[0]);
             i++;
-        } else if (sem_trywait(&sem_4) == 0) {
-            printf("Consumer %s - Ciclo %d - Seccion S2 - Valor %s\n", c, i, global_variable_2);
-            sem_post(&sem_3);
+        } else if (sem_trywait(&sem[3]) == 0) {
+            printf("Consumer %c - Ciclo %d - Seccion S2 - Valor %c\n", c, i, global_variable_2);
+            sem_post(&sem[2]);
             i++;
         }
     }
 }
 
+
+
+
 int main(int argc, char const *argv[])
 {
-
-    //Creacion e inicializacion del semaforo
-    sem_init(&sem_1, 0, 1);
-    sem_init(&sem_2, 0, 0);
-    sem_init(&sem_3, 0, 1);
-    sem_init(&sem_4, 0, 0);
+    for (int i = 0; i < 4; i++)
+        if (i%2 == 0)
+            sem_init(&sem[i], 0, 1);
+        else
+            sem_init(&sem[i], 0, 0);
 
     //Creacion de hilos
     pthread_t threads[8];
@@ -94,5 +103,17 @@ int main(int argc, char const *argv[])
     pthread_join(threads[6], NULL);
     pthread_join(threads[7], NULL);
 
+
+
+
+
+
+
+
     return 0;
+}
+
+int error(char *err) {
+    perror(err);
+    return -1;
 }
