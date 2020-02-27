@@ -61,6 +61,7 @@ void *consumer(void *args) {
             for (int j = 0, k = 0; k < lim_sc/2; j = j+2, k++)
                 if (sem_trywait(&sem[j+1]) == 0) {
                     printf("Consumer %c - Ciclo %d\t- Seccion %d - Valor %c\n", c, i+1, k+1, global_variable[k]);
+                    //Aqui iria la funcion de guardar
                     sem_post(&sem[j]);
                     flag = 1;
                     break;
@@ -71,6 +72,7 @@ void *consumer(void *args) {
             for (int j = lim_sp/2, k = lim_sc/2; k < lim_sc; j = j+2, k++)
                 if (sem_trywait(&sem[j+1]) == 0) {
                     printf("Consumer %c - Ciclo %d\t- Seccion %d - Valor %c\n", c, i+1, k+1, global_variable[k]);
+                    //Aqui iria la funcion de guardar
                     sem_post(&sem[j]);
                     i++;
                     flag = 0;
