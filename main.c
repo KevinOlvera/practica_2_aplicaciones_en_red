@@ -9,9 +9,9 @@
 //char global_variable_2[4];
 
 #define lim_cp 1    //# Consumos Producciones
-#define lim_sp 16    //# Semaforos
+#define lim_sp 16   //# Semaforos
 #define lim_sc 8    //# Secciones
-#define lim_th 10    //# Hilos
+#define lim_th 10   //# Hilos
 
 char global_variable[lim_sc];
 
@@ -22,15 +22,31 @@ void *producer(void *args) {
     int i = 0;
     while (i < lim_cp)
     {
-        int k = 0;
-        for (int j = 0; k < lim_sc; j = j+2, k++)
-            if (sem_trywait(&sem[j]) == 0) {
-                global_variable[k] = c;
-                printf("Producer %c - Ciclo %d\t- Seccion S%d\n", global_variable[k], i+1, k+1);
-                sem_post(&sem[j+1]);
-                i++;
-                break;
-            }
+        int k, flag = 0;
+
+        while (flag == 0) {
+            for (int j = 0, k = 0; k < lim_sc/2; j = j+2, k++)
+                if (sem_trywait(&sem[j]) == 0) {
+                    global_variable[k] = c;
+                    printf("Producer %c - Ciclo %d\t- Seccion %d\n", global_variable[k], i+1, k+1);
+                    sem_post(&sem[j+1]);
+                    flag = 1;
+                    break;
+                }
+        }
+
+        while (flag == 1) {
+            for (int j = lim_sp/2, k = lim_sc/2; k < lim_sc; j = j+2, k++)
+                if (sem_trywait(&sem[j]) == 0) {
+                    global_variable[k] = c-16;
+                    printf("Producer %c - Ciclo %d\t- Seccion %d\n", global_variable[k], i+1, k+1);
+                    sem_post(&sem[j+1]);
+                    i++;
+                    flag = 0;
+                    break;
+                }
+        }
+
     }
     return EXIT_SUCCESS;
 }
@@ -40,14 +56,27 @@ void *consumer(void *args) {
     int i = 0;
     while (i < lim_cp)
     {
-        int k = 0;
-        for (int j = 0; k < lim_sc; j = j+2, k++)
-            if (sem_trywait(&sem[j+1]) == 0) {
-                printf("Consumer %c - Ciclo %d\t- Seccion S%d - Valor %c\n", c, i+1, k+1, global_variable[k]);
-                sem_post(&sem[j]);
-                i++;
-                break;
-            }
+        int k = 0, flag = 0;
+        while (flag == 0) {
+            for (int j = 0, k = 0; k < lim_sc/2; j = j+2, k++)
+                if (sem_trywait(&sem[j+1]) == 0) {
+                    printf("Consumer %c - Ciclo %d\t- Seccion %d - Valor %c\n", c, i+1, k+1, global_variable[k]);
+                    sem_post(&sem[j]);
+                    flag = 1;
+                    break;
+                }
+        }
+
+        while (flag == 1) {
+            for (int j = lim_sp/2, k = lim_sc/2; k < lim_sc; j = j+2, k++)
+                if (sem_trywait(&sem[j+1]) == 0) {
+                    printf("Consumer %c - Ciclo %d\t- Seccion %d - Valor %c\n", c, i+1, k+1, global_variable[k]);
+                    sem_post(&sem[j]);
+                    i++;
+                    flag = 0;
+                    break;
+                }
+        }
     }
 }
 
